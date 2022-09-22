@@ -1,0 +1,37 @@
+type Post {
+    id: ID!
+    title: String!
+    content: String!
+    author: User! @belongsTo
+    comments: [Comment!]! @hasMany
+    numberOfComments: Int! @count(relation: "comments"),
+    firstLetter: String! @method(name: "firstLetterOfAuthorName")
+}
+
+extend type Query {
+    "default sort by title, support of customized sort, every item of columns array have it's own uppercased enum key"
+    posts(
+        orderByColumns: _ @orderBy(columns: ["id", "title", "content", "author_id", "created_at"]),
+        orderByRelations: _ @orderBy(relations: [{relation: "comments", columnsEnum: "commentsColumns"}])
+    ): [Post!]! @all @orderBy(column: "title", direction: ASC) @softDeletes
+    post(id: ID! @eq): Post @find
+    paginatedPosts: [Post!]! @paginate(defaultCount: 5, maxCount: 7)
+    postsOrderedByUsers: [Post!]! @all
+    "Local Scopes"
+    postsWithManyComments: [Post!]! @all(scopes: ["manyComments"])
+}
+
+extend type Mutation {
+    createPost(input: CreatePostInput! @spread): Post! @create
+    updatePost(id: ID!, title: String!, content: String!, author_id: ID!): Post! @update
+    upsertPost(id: ID, title: String!, content: String!, author_id: ID!): Post! @upsert
+    deletePost(id: ID!): Post! @delete
+    restorePost(id: ID!): Post! @restore
+    forceDeletePost(id: ID!): Post! @forceDelete
+}
+
+input CreatePostInput {
+    title: String @rules(apply: ["required"])
+    content: String! @rules(apply: ["min:50", "max:150"])
+    author_id: ID!
+}

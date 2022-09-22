@@ -1,0 +1,26 @@
+type Comment {
+    id: ID!
+    reply: String!
+    "Renaming Relations"
+    article: Post! @belongsTo(relation: "post")
+}
+
+extend type Query {
+    "Reuse of columns set"
+    allComments(orderBy: _ @orderBy(columnsEnum: "commentColumns")): [Comment!]! @all
+    paginatedComments(orderBy: _ @orderBy(columnsEnum: "commentColumns")): [Comment!]! @paginate
+}
+
+extend type Mutation {
+    createComment(post_id: ID!, reply: String!): Comment! @create
+    updateComment(id: ID!, post_id: ID!, reply: String!): Comment! @update
+    upsertComment(id: ID, post_id: ID!, reply: String!): Comment! @upsert
+    deleteComment(id: ID!): Comment! @delete
+}
+
+"no need to repeat full columns names"
+enum commentColumns {
+    CREATED @enum(value: "created_at")
+    POST @enum(value: "post_id")
+    REPLY @enum(value: "reply")
+}
